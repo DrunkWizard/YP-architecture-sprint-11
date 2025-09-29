@@ -1,0 +1,85 @@
+@startuml C4_Container_Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Container Diagram Future 2.0 Data Platform
+
+Person(medical_staff, "Медицинский персонал", "Врачи, медсестры")
+Person(analysts, "Аналитики", "Бизнес-аналитики")
+Person(finance, "Сотрудники финтех-сервисов", "Сотрудники финтех-сервисов")
+Person(data_scientist, "Data Scientist", "Разработчик ML моделей")
+
+System_Boundary(old_system, "Legacy Systems") {
+    Container(old_dwh, "Устаревшее хранилище данных", "MsSQL 2008", "Исторические данные")
+}
+
+System_Boundary(external_systems, "External Systems") {
+    Container(medical_system, "Медицинская система", "Python, Java", "Мед. данные и ИИ-сервисы")
+    Container(fintech_system, "Финтех система", "Golang, Java", "Банковские и финансовые сервисы")
+    Container(pharma_system, "Фармацевтическая система", "Golang, Java", "Фармацевтические данные")
+    Container(equipment_system, "Система мед. оборудования", "Golang, Java", "Данные оборудования")
+    Container(accounting_system, "Бухгалтерская система", "Golang, Java", "Бухгалтерские данные")
+}
+
+System_Boundary(data_platform, "Future 2.0 Data Platform") {
+    Container(data_mart, "Витрина данных", "React", "Единый интерфейс для работы с данными")
+    
+    Container(api_gateway, "API Gateway", "Kong/AWS API Gateway", "Единая точка входа для API")
+    
+    Container(ingestion_service, "Сервис приема данных", "Apache NiFi/AWS Glue", "Оркестрация ETL/ELT процессов")
+    Container(message_queue, "Очередь сообщений", "Apache Kafka", "Буферизация и потоковая передача данных")
+    
+    Container(data_lake, "Data Lake", "AWS S3", "Необработанные данные в исходном формате")
+    Container(data_warehouse, "Data Warehouse", "Snowflake", "Структурированные данные для аналитики")
+    Container(metadata_store, "Хранилище метаданных", "PostgreSQL", "Метаданные и lineage")
+    
+    Container(batch_processing, "Пакетная обработка", "Apache Spark", "ETL трансформации")
+    Container(stream_processing, "Потоковая обработка", "Apache Flink", "Обработка в реальном времени")
+    
+    Container(data_catalog, "Data Catalog", "Amundsen/DataHub", "Поиск и управление данными")
+    Container(reporting_service, "Сервис отчетности", "Metabase", "Дашборды и отчеты")
+    Container(ml_service, "ML Service", "Kubeflow", "ML модели и инференс")
+    Container(auth_service, "Сервис аутентификации", "Keycloak", "Управление доступом")
+    Container(monitoring_service, "Мониторинг", "Prometheus/Grafana", "Метрики и алерты")
+}
+
+Rel(medical_staff, data_mart, "Просмотр мед. данных", "HTTPS")
+Rel(analysts, data_mart, "Аналитика и отчеты", "HTTPS")
+Rel(finance, data_mart, "Фин. аналитика", "HTTPS")
+Rel(data_scientist, ml_service, "Обучение моделей", "Python SDK")
+
+Rel(medical_system, ingestion_service, "Отправка данных", "REST API/Kafka")
+Rel(fintech_system, ingestion_service, "Отправка данных", "REST API/Kafka")
+Rel(pharma_system, ingestion_service, "Отправка данных", "REST API/Kafka")
+Rel(equipment_system, ingestion_service, "Отправка данных", "REST API/Kafka")
+Rel(accounting_system, ingestion_service, "Отправка данных", "REST API/Kafka")
+Rel(old_dwh, ingestion_service, "Миграция данных", "JDBC/Kafka")
+
+Rel(data_mart, api_gateway, "API запросы", "REST")
+
+Rel(api_gateway, auth_service, "Проверка авторизации", "JWT")
+Rel(api_gateway, data_catalog, "Поиск метаданных", "REST")
+Rel(api_gateway, reporting_service, "Запрос отчетов", "REST")
+Rel(api_gateway, ml_service, "ML инференс", "REST")
+
+Rel(ingestion_service, message_queue, "Буферизация данных", "Kafka Protocol")
+Rel(message_queue, batch_processing, "Пакетная обработка", "Kafka")
+Rel(message_queue, stream_processing, "Потоковая обработка", "Kafka")
+
+Rel(batch_processing, data_lake, "Запись сырых данных", "S3 API")
+Rel(batch_processing, data_warehouse, "Запись обработанных данных", "JDBC")
+Rel(stream_processing, data_warehouse, "Потоковая запись", "JDBC")
+Rel(batch_processing, metadata_store, "Обновление метаданных", "JDBC")
+
+Rel(data_lake, data_catalog, "Сканирование метаданных", "S3 Crawler")
+Rel(data_warehouse, data_catalog, "Сканирование метаданных", "SQL Metadata")
+
+Rel(data_warehouse, reporting_service, "Данные для отчетов", "SQL")
+Rel(data_warehouse, ml_service, "Данные для обучения", "SQL")
+
+Rel(monitoring_service, data_lake, "Мониторинг хранилища", "CloudWatch")
+Rel(monitoring_service, data_warehouse, "Мониторинг DWH", "CloudWatch")
+Rel(monitoring_service, api_gateway, "Мониторинг API", "Metrics API")
+
+@enduml
