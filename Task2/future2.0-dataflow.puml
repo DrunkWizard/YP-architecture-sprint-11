@@ -1,0 +1,48 @@
+@startuml DataFlowDiagram
+
+actor "Business Users" as users
+actor "Data Scientist" as ds
+actor "Data Engineer" as de
+rectangle "External & Legacy Systems" as ext_systems
+
+rectangle "Future 2.0 data" {
+    usecase "Приём и буферизация данных" as P1
+    usecase "Обработка обогащение данных" as P2
+    usecase "Хранение данных" as P3
+    usecase "Управление и каталогизация" as P4
+    usecase "Предоставление данных и сервисов" as P5
+
+    database "Message Queue" as DS1
+    database "Data Lake" as DS2
+    database "Data Warehouse" as DS3
+    database "Data Catalog" as DS4
+    database "ML Model Registry" as DS5
+}
+
+ext_systems -> P1 : "Сырые данные"
+P1 -> DS1 : "Данные для обработки"
+
+DS1 -> P2 : "Очередь данных"
+P2 -> P3 : "Очищенные и\nструктурированные данные"
+P2 ..> de : "Результаты DQ"
+
+P3 -> DS2 : "Запись в Data Lake"
+P3 -> DS3 : "Запись в Data Warehouse"
+
+DS2 -..> P4 : "Технические метаданные"
+DS3 -..> P4 : "Бизнес и тех. метаданные"
+de ..> P4 : "Определения пайплайнов"
+P4 --> DS4 : "Обновлённые метаданные\nи lineage"
+
+DS3 -> P5 : "Данные для отчётов и обучения"
+DS4 -..> P5 : "Метаданные для поиска"
+P5 -> DS5 : "Обученные модели"
+
+P5 -> users : "Отчёты и дашборды"
+DS4 ..> users : "Поиск по каталогу"
+
+P5 -> ds : "Подготовленные витрины"
+DS5 ..> ds : "Доступ к моделям"
+DS4 ..> ds : "Поиск по каталогу"
+
+@enduml
